@@ -7,13 +7,19 @@
 
 import SwiftUI
 import ThemeKit
+import SwiftData
 
 struct DetailView: View {
     let scrum: DailyScrum
+    
+    @State private var isPresentingEditView = false
+    @State private var errorWrapper: ErrorWrapper?
+    
+    
     var body: some View {
         List {
             Section(header: Text("Meeting Info")) {
-                NavigationLink(destination: MeetingView()) {
+                NavigationLink(destination: MeetingView(scrum: scrum, errorWrapper: $errorWrapper)) {
                     Label("Start Meeting", systemImage: "timer")
                         .font(.headline)
                         .foregroundColor(.accentColor)
@@ -40,13 +46,41 @@ struct DetailView: View {
                     Label(attendee.name, systemImage: "person")
                 }
             }
+            Section(header: Text("History")) {
+                if scrum.history.isEmpty {
+                    Label("No meetings yet", systemImage: "calendar.badge.exclamationmark")
+                }
+                ForEach(scrum.history) { history in
+                    NavigationLink(destination: HistoryView(history: history)) {
+                        HStack {
+                            Image(systemName: "calendar")
+                            Text(history.date, style: .date)
+                        }
+                    }
+                }
+            }
         }
         .navigationTitle(scrum.title)
+        .toolbar {
+            Button("Edit") {
+                isPresentingEditView = true
+            }
+        }
+        .sheet(isPresented: $isPresentingEditView) {
+            NavigationStack {
+                DetailEditView(scrum: scrum)
+                    .navigationTitle(scrum.title)
+            }
+        }
+        .sheet(item: $errorWrapper, onDismiss: nil) { wrapper in
+            ErrorView(errorWrapper: wrapper)
+        }
     }
 }
 
 #Preview {
+    @Previewable @Query(sort: \DailyScrum.title) var scrums: [DailyScrum]
     NavigationStack {
-        DetailView(scrum: DailyScrum.sampleData[0])
+        DetailView(scrum: scrums[0])
     }
 }

@@ -7,9 +7,12 @@
 
 import SwiftUI
 import ThemeKit
+import SwiftData
 
 struct ScrumsView: View {
-    let scrums: [DailyScrum]
+    @Query(sort: \DailyScrum.title) var scrums: [DailyScrum]
+    @State private var isPresentingNewScrumView = false
+    
     var body: some View {
         NavigationStack {
             List(scrums){ scrum in
@@ -20,15 +23,21 @@ struct ScrumsView: View {
             }
             .navigationTitle("Daily Scrums")
             .toolbar {
-                Button(action: {}) {
+                Button(action: {
+                    isPresentingNewScrumView = true
+                }) {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel("New Scrum")
             }
         }
+        .sheet(isPresented: $isPresentingNewScrumView) {
+            NewScrumSheet()
+        }
     }
 }
 
 #Preview {
-    ScrumsView(scrums: DailyScrum.sampleData)
+    @Previewable @State var scrums = DailyScrum.sampleData
+    ScrumsView()
 }
